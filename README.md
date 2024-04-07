@@ -1,3 +1,12 @@
+## Projeto em Construção 🚧
+<br>
+
+> [!CAUTION]
+> ⚠️ Este projeto está em desenvolvimento ativo.
+> Algumas funcionalidades podem estar incompletas ou sujeitas a mudanças. ⚠️
+
+<br>
+
 # 📊 Editor de Excel com Pandas
 
 Este é um aplicativo simples de editor de Excel usando Python, Tkinter e Pandas. Ele permite abrir arquivos Excel, exibir os dados em uma interface gráfica e oferece algumas opções básicas de edição.
