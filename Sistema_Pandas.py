@@ -1,3 +1,4 @@
+# Importações das bibliotecas necessárias
 import tkinter as tk
 from tkinter import *
 from tkinter import ttk
@@ -21,6 +22,7 @@ class ExcelEditor:
         self.janela_principal = janela_principal
         self.tree = ttk.Treeview(self.janela_principal)  # Criando a Treeview para exibir os dados
         self.resultado_label = Label(self.janela_principal, text="Total: ", font="Arial 16", bg="#F5F5F5")
+        self.resultado_label.pack(side=TOP, padx=10, pady=10)  # Configuração do rótulo de resultado
         self.df = pd.DataFrame()  # Dataframe vazio para armazenar os dados do Excel
         self.cria_widgets()  # Criando os widgets da interface
 
@@ -28,6 +30,7 @@ class ExcelEditor:
         """
         Cria os widgets da interface, como menus e configurações da Treeview.
         """
+        # Criação da barra de menu
         menu_bar = tk.Menu(self.janela_principal)
 
         # Menu Arquivo
@@ -41,7 +44,7 @@ class ExcelEditor:
 
         # Menu Editar
         menu_edicao = tk.Menu(menu_bar, tearoff=0)
-        menu_edicao.add_command(label="Renomear Coluna", command=janela.destroy)
+        menu_edicao.add_command(label="Renomear Coluna", command=self.renomear_coluna)
         menu_edicao.add_command(label="Remover Coluna", command=janela.destroy)
         menu_edicao.add_command(label="Filtrar", command=janela.destroy)
         menu_edicao.add_command(label="Pivot", command=janela.destroy)
@@ -65,11 +68,73 @@ class ExcelEditor:
         relatorio_menu.add_command(label="Quebra", command=janela.destroy)
         menu_bar.add_cascade(label="Relatórios", menu=relatorio_menu)
 
+        # Menu Temas
+        menu_temas = tk.Menu(menu_bar, tearoff=0)
+        menu_temas.add_command(label="Material Dark", command=self.aplicar_tema_dark)
+        menu_temas.add_command(label="Material Light", command=self.aplicar_tema_light)
+        menu_bar.add_cascade(label="Temas", menu=menu_temas)
+
         # Configurando a barra de menu
         self.janela_principal.config(menu=menu_bar)
 
-        # Configurando a Treeview
+        # Criando a Treeview para exibir os dados
+        self.tree = tk.ttk.Treeview(self.janela_principal)
+
+        # Configurando a Treeview (Insere o widget de árvore na janela principal)
         self.tree.pack(expand=False)
+
+    def soma_colunas_com_valor(self):
+        """
+        Calcula a soma das colunas numéricas do DataFrame e exibe o resultado no rótulo de resultado.
+        """
+        resultados = []
+
+        # Itera sobre cada coluna no DataFrame
+        for coluna in self.df.columns:
+            # Verifica se a coluna contém dados numéricos
+            if pd.api.types.is_numeric_dtype(self.df[coluna]):
+                # Seleciona os valores da coluna, excluindo o primeiro elemento (o cabeçalho)
+                valores_numericos = self.df[coluna][1:]
+
+                # Converte os valores para tipo numérico, tratando erros com 'coerce'
+                valores_numericos = pd.to_numeric(valores_numericos, errors='coerce')
+
+                # Remove os valores NaN (não é um número) da série
+                valores_numericos = valores_numericos[~np.isnan(valores_numericos)]
+
+                # Calcula a soma dos valores numéricos da coluna
+                soma = valores_numericos.sum()
+
+                # Cria uma string com a mensagem indicando a soma da coluna atual
+                resultado = f"A soma da coluna {coluna} é {soma}"
+
+                # Adiciona o resultado à lista de resultados
+                resultados.append(resultado)
+
+        # Atualiza o texto do Label com os resultados das somas das colunas
+        self.resultado_label.config(text="\n".join(resultados))
+
+    def aplicar_tema_dark(self):
+        # Define as cores do tema escuro
+        cor_fundo = "#121212"  # Cor de fundo do tema escuro
+        cor_texto = "#ecf0f1"  # Cor do texto do tema escuro
+        cor_selecao = "#2e2e2e"  # Cor de seleção do tema escuro
+
+    # Aplica as cores aos elementos da interface
+        self.janela_principal.config(bg=cor_fundo)  # Cor de fundo da janela principal
+        self.resultado_label.config(bg=cor_fundo, fg=cor_texto)  # Cores do rótulo de resultado
+        self.tree.config(bg=cor_fundo, fg=cor_texto, selectbackground=cor_selecao)  # Cores da Treeview
+
+    def aplicar_tema_light(self):
+        # Define as cores do tema claro
+        cor_fundo = "#ecf0f1"  # Cor de fundo do tema claro
+        cor_texto = "#121212"  # Cor do texto do tema claro
+        cor_selecao = "#3498db"  # Cor de seleção do tema claro
+
+        # Aplica as cores aos elementos da interface
+        self.janela_principal.config(bg=cor_fundo)  # Cor de fundo da janela principal
+        self.resultado_label.config(bg=cor_fundo, fg=cor_texto)  # Cores do rótulo de resultado
+        self.tree.config(bg=cor_fundo, fg=cor_texto, selectbackground=cor_selecao)  # Cores da Treeview
 
     def carregar_excel(self):
         """
@@ -79,9 +144,17 @@ class ExcelEditor:
         self.nome_do_arquivo = filedialog.askopenfilename(title="Selecione o Arquivo", filetypes=tipo_de_arquivo)
 
         try:
+            # Tenta ler o arquivo Excel especificado pelo nome_do_arquivo usando o Pandas
             self.df = pd.read_excel(self.nome_do_arquivo)
+
+            # Atualiza a Treeview com o conteúdo do arquivo Excel lido
             self.atualiza_treeview()
+
+            # Calcula a soma das colunas com valores
+            self.soma_colunas_com_valor()
+
         except Exception as e:
+            # Se ocorrer algum erro ao abrir o arquivo Excel, exibe uma mensagem de erro
             messagebox.showerror("Erro!", f"Não foi possível abrir o arquivo: {e}")
 
     def atualiza_treeview(self):
@@ -96,10 +169,81 @@ class ExcelEditor:
             self.tree.heading(column, text=column)  # Define os cabeçalhos das colunas
 
         # Insere os dados do DataFrame na Treeview
-        for _, row in self.df.iterrows():
-            values = [np.asscalar(value) if isinstance(value, np.generic) else value for value in row]
+        # Itera sobre cada linha do DataFrame e insere os valores na Treeview
+        for i, row in self.df.iterrows():
+            # Cria uma lista para armazenar os valores da linha
+            values = list(row)
+
+            # Itera sobre cada valor na lista de valores
+            for j, value in enumerate(values):
+                # Verifica se o valor é do tipo np.generic
+                if isinstance(value, np.generic):
+                    # Converte o valor para o tipo nativo do Python
+                    values[j] = np.asscalar(value)
+
+            # Insere os valores processados na Treeview
             self.tree.insert("", tk.END, values=values)
 
+    def renomear_coluna(self):
+        """
+        Abre uma nova janela para permitir que o usuário renomeie uma coluna do DataFrame.
+
+        Esta função cria uma nova janela (usando Toplevel) que contém widgets para inserir o nome da coluna a ser renomeada
+        e o novo nome desejado. Um botão "Renomear" é fornecido para confirmar a ação.
+        """
+        # Cria uma nova janela para renomear a coluna
+        janela_renomear_coluna = tk.Toplevel(self.janela_principal)
+        janela_renomear_coluna.title("Renomear Coluna")
+
+        # Configuração da geometria da janela
+        largura_janela = 400
+        altura_janela = 250
+        largura_tela = janela_renomear_coluna.winfo_screenwidth()
+        altura_tela = janela_renomear_coluna.winfo_screenheight()
+        posicao_x = (largura_tela // 2) - (largura_janela // 2)
+        posicao_y = (altura_tela // 2) - (altura_janela // 2)
+        janela_renomear_coluna.geometry(f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}")
+
+        # Configurações visuais da janela (bg color)
+        janela_renomear_coluna.configure(bg="#FFFFFF")
+
+        # Rótulo e campo de entrada para o nome da coluna atual
+        label_coluna = tk.Label(janela_renomear_coluna, text="Digite o nome da coluna que deseja renomear:", font=("Arial", 12), bg="#FFFFFF")
+        label_coluna.pack(pady=10)
+        entry_coluna = tk.Entry(janela_renomear_coluna, font=("Arial", 12), bg="#FFFFFF")
+        entry_coluna.pack()
+
+        # Rótulo e campo de entrada para o novo nome da coluna
+        label_novo_nome = tk.Label(janela_renomear_coluna, text="Digite o novo nome:", font=("Arial", 12), bg="#FFFFFF")
+        label_novo_nome.pack(pady=10)
+        entry_novo_nome = tk.Entry(janela_renomear_coluna, font=("Arial", 12), bg="#FFFFFF")
+        entry_novo_nome.pack()
+
+        # Botão para executar a ação de renomear a coluna
+        botao_renomear = tk.Button(janela_renomear_coluna, text="Renomear", font=("Arial", 12), command=lambda: self.funcao_renomear_coluna(entry_coluna.get(), entry_novo_nome.get(), janela_renomear_coluna))
+        botao_renomear.pack(pady=20)
+
+        # Cria / exibe na tela
+        janela_renomear_coluna.mainloop()
+
+    def funcao_renomear_coluna(self, column, novo_nome, janela_renomear_coluna):
+        """
+        Renomeia a coluna especificada com o novo nome fornecido pelo usuário.
+
+        Esta função é chamada quando o usuário clica no botão "Renomear". Ela verifica se um novo nome foi fornecido
+        e, se sim, renomeia a coluna correspondente no DataFrame. Em seguida, a Treeview é atualizada com os novos dados
+        e a janela de renomear coluna é fechada.
+        """
+        # Verifica se foi fornecido um novo nome para a coluna
+        if novo_nome:
+            # Renomeia a coluna no DataFrame
+            self.df = self.df.rename(columns={column: novo_nome})
+
+            # Atualiza a Treeview com os novos dados do DataFrame
+            self.atualiza_treeview()
+
+            # Fecha a janela de renomear coluna após a conclusão da operação
+            janela_renomear_coluna.destroy()
 
 # Instancia a classe ExcelEditor passando a janela principal como parâmetro
 editor = ExcelEditor(janela)
