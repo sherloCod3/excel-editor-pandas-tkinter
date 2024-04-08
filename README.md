@@ -58,6 +58,14 @@ Geração de relatórios: Crie relatórios consolidados e quebras de dados.
 
 ---
 
+## Screenshot
+
+Aqui está uma captura de tela do aplicativo em ação:
+
+![Screenshot do Aplicativo](https://github.com/sherloCod3/excel-editor-pandas-tkinter/blob/main/assets/Shot-2024-04-08-094712.png)
+
+---
+
 ## Contribuindo 🤝
 Sinta-se à vontade para contribuir com novos recursos ou correções de bugs.
 Faça um fork do projeto, implemente suas mudanças e envie uma pull request.
