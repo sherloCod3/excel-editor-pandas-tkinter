@@ -15,10 +15,33 @@ Este é um aplicativo simples de editor de Excel usando Python, Tkinter e Pandas
 
 ## Funcionalidades
 
-- **Abrir Arquivos Excel:** Abra facilmente arquivos Excel (.xlsx, .xls) para visualizar e editar os dados.
-- **Tabela Interativa:** Visualize os dados do arquivo Excel em uma tabela interativa e de fácil navegação.
-- **Edição Simples:** Realize operações básicas de edição, como renomear colunas e remover duplicados.
-- **Interface Amigável:** Interface gráfica intuitiva e fácil de usar, construída com Tkinter.
+### Arquivo:
+- **Carregar Excel:** Abre uma janela para selecionar um arquivo Excel, lê o arquivo usando Pandas e atualiza a Treeview com os dados.
+- **Salvar Excel:** Salva o DataFrame atual em um novo arquivo Excel.
+
+### Editar:
+- **Renomear Coluna:** Abre uma nova janela para permitir que o usuário renomeie uma coluna do DataFrame.
+- **Remover Coluna:** Remove a coluna selecionada do DataFrame.
+- **Filtrar:** Abre uma janela para permitir que o usuário filtre os dados com base em critérios específicos.
+- **Pivot:** Abre uma janela para permitir que o usuário faça uma operação de pivotamento nos dados.
+- **Group:** Abre uma janela para permitir que o usuário agrupe os dados com base em uma ou mais colunas.
+- **Remover Linhas em Branco:** Remove as linhas em branco do DataFrame.
+- **Remover Linhas Alternadas:** Remove linhas alternadas do DataFrame.
+- **Remover Duplicados:** Remove linhas duplicadas do DataFrame.
+
+### Merge:
+- **Inner Join:** Realiza uma operação de inner join em dois DataFrames.
+- **Join Full:** Realiza uma operação de full join em dois DataFrames.
+- **Left Join:** Realiza uma operação de left join em dois DataFrames.
+- **Merge Outer:** Realiza uma operação de outer merge em dois DataFrames.
+
+### Relatórios:
+- **Consolidar:** Abre uma janela para permitir que o usuário consolide os dados de várias planilhas ou arquivos em um único conjunto de dados.
+- **Quebra:** Abre uma janela para permitir que o usuário divida os dados com base em critérios específicos.
+
+### Temas:
+- **Aplicar Tema Dark:** Aplica um tema escuro à interface.
+- **Aplicar Tema Light:** Aplica um tema claro à interface.
 
 ---
 
