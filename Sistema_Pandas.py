@@ -20,9 +20,15 @@ class ExcelEditor:
         e inicializa outras variáveis necessárias.
         """
         self.janela_principal = janela_principal
-        self.tree = ttk.Treeview(self.janela_principal)  # Criando a Treeview para exibir os dados
-        self.resultado_label = Label(self.janela_principal, text="Total: ", font="Arial 16", bg="#F5F5F5")
-        self.resultado_label.pack(side=TOP, padx=10, pady=10)  # Configuração do rótulo de resultado
+        self.tree = ttk.Treeview(
+            self.janela_principal
+        )  # Criando a Treeview para exibir os dados
+        self.resultado_label = Label(
+            self.janela_principal, text="Total: ", font="Arial 16", bg="#F5F5F5"
+        )
+        self.resultado_label.pack(
+            side=TOP, padx=10, pady=10
+        )  # Configuração do rótulo de resultado
         self.df = pd.DataFrame()  # Dataframe vazio para armazenar os dados do Excel
         self.cria_widgets()  # Criando os widgets da interface
 
@@ -49,8 +55,12 @@ class ExcelEditor:
         menu_edicao.add_command(label="Filtrar", command=janela.destroy)
         menu_edicao.add_command(label="Pivot", command=janela.destroy)
         menu_edicao.add_command(label="Group", command=janela.destroy)
-        menu_edicao.add_command(label="Remover Linhas em Branco", command=janela.destroy)
-        menu_edicao.add_command(label="Remover Linhas Alternadas", command=janela.destroy)
+        menu_edicao.add_command(
+            label="Remover Linhas em Branco", command=self.remover_linhas_em_branco
+        )
+        menu_edicao.add_command(
+            label="Remover Linhas Alternadas", command=self.remover_linhas_selecionadas
+        )
         menu_edicao.add_command(label="Remover Duplicados", command=janela.destroy)
         menu_bar.add_cascade(label="Editar", menu=menu_edicao)
 
@@ -97,7 +107,7 @@ class ExcelEditor:
                 valores_numericos = self.df[coluna][1:]
 
                 # Converte os valores para tipo numérico, tratando erros com 'coerce'
-                valores_numericos = pd.to_numeric(valores_numericos, errors='coerce')
+                valores_numericos = pd.to_numeric(valores_numericos, errors="coerce")
 
                 # Remove os valores NaN (não é um número) da série
                 valores_numericos = valores_numericos[~np.isnan(valores_numericos)]
@@ -120,10 +130,14 @@ class ExcelEditor:
         cor_texto = "#ecf0f1"  # Cor do texto do tema escuro
         cor_selecao = "#2e2e2e"  # Cor de seleção do tema escuro
 
-    # Aplica as cores aos elementos da interface
+        # Aplica as cores aos elementos da interface
         self.janela_principal.config(bg=cor_fundo)  # Cor de fundo da janela principal
-        self.resultado_label.config(bg=cor_fundo, fg=cor_texto)  # Cores do rótulo de resultado
-        self.tree.config(bg=cor_fundo, fg=cor_texto, selectbackground=cor_selecao)  # Cores da Treeview
+        self.resultado_label.config(
+            bg=cor_fundo, fg=cor_texto
+        )  # Cores do rótulo de resultado
+        self.tree.config(
+            bg=cor_fundo, fg=cor_texto, selectbackground=cor_selecao
+        )  # Cores da Treeview
 
     def aplicar_tema_light(self):
         # Define as cores do tema claro
@@ -133,15 +147,21 @@ class ExcelEditor:
 
         # Aplica as cores aos elementos da interface
         self.janela_principal.config(bg=cor_fundo)  # Cor de fundo da janela principal
-        self.resultado_label.config(bg=cor_fundo, fg=cor_texto)  # Cores do rótulo de resultado
-        self.tree.config(bg=cor_fundo, fg=cor_texto, selectbackground=cor_selecao)  # Cores da Treeview
+        self.resultado_label.config(
+            bg=cor_fundo, fg=cor_texto
+        )  # Cores do rótulo de resultado
+        self.tree.config(
+            bg=cor_fundo, fg=cor_texto, selectbackground=cor_selecao
+        )  # Cores da Treeview
 
     def carregar_excel(self):
         """
         Abre uma janela para selecionar o arquivo Excel, lê o arquivo usando Pandas e atualiza a Treeview com os dados.
         """
         tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
-        self.nome_do_arquivo = filedialog.askopenfilename(title="Selecione o Arquivo", filetypes=tipo_de_arquivo)
+        self.nome_do_arquivo = filedialog.askopenfilename(
+            title="Selecione o Arquivo", filetypes=tipo_de_arquivo
+        )
 
         try:
             # Tenta ler o arquivo Excel especificado pelo nome_do_arquivo usando o Pandas
@@ -202,25 +222,48 @@ class ExcelEditor:
         altura_tela = janela_renomear_coluna.winfo_screenheight()
         posicao_x = (largura_tela // 2) - (largura_janela // 2)
         posicao_y = (altura_tela // 2) - (altura_janela // 2)
-        janela_renomear_coluna.geometry(f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}")
+        janela_renomear_coluna.geometry(
+            f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}"
+        )
 
         # Configurações visuais da janela (bg color)
         janela_renomear_coluna.configure(bg="#FFFFFF")
 
         # Rótulo e campo de entrada para o nome da coluna atual
-        label_coluna = tk.Label(janela_renomear_coluna, text="Digite o nome da coluna que deseja renomear:", font=("Arial", 12), bg="#FFFFFF")
+        label_coluna = tk.Label(
+            janela_renomear_coluna,
+            text="Digite o nome da coluna que deseja renomear:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
         label_coluna.pack(pady=10)
-        entry_coluna = tk.Entry(janela_renomear_coluna, font=("Arial", 12), bg="#FFFFFF")
+        entry_coluna = tk.Entry(
+            janela_renomear_coluna, font=("Arial", 12), bg="#FFFFFF"
+        )
         entry_coluna.pack()
 
         # Rótulo e campo de entrada para o novo nome da coluna
-        label_novo_nome = tk.Label(janela_renomear_coluna, text="Digite o novo nome:", font=("Arial", 12), bg="#FFFFFF")
+        label_novo_nome = tk.Label(
+            janela_renomear_coluna,
+            text="Digite o novo nome:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
         label_novo_nome.pack(pady=10)
-        entry_novo_nome = tk.Entry(janela_renomear_coluna, font=("Arial", 12), bg="#FFFFFF")
+        entry_novo_nome = tk.Entry(
+            janela_renomear_coluna, font=("Arial", 12), bg="#FFFFFF"
+        )
         entry_novo_nome.pack()
 
         # Botão para executar a ação de renomear a coluna
-        botao_renomear = tk.Button(janela_renomear_coluna, text="Renomear", font=("Arial", 12), command=lambda: self.funcao_renomear_coluna(entry_coluna.get(), entry_novo_nome.get(), janela_renomear_coluna))
+        botao_renomear = tk.Button(
+            janela_renomear_coluna,
+            text="Renomear",
+            font=("Arial", 12),
+            command=lambda: self.funcao_renomear_coluna(
+                entry_coluna.get(), entry_novo_nome.get(), janela_renomear_coluna
+            ),
+        )
         botao_renomear.pack(pady=20)
 
         # Cria / exibe na tela
@@ -244,6 +287,110 @@ class ExcelEditor:
 
             # Fecha a janela de renomear coluna após a conclusão da operação
             janela_renomear_coluna.destroy()
+
+    def remover_linhas_em_branco(self):
+        # Exibe uma caixa de diálogo com a pergunta "Tem certeza que deseja remover as linhas em branco?"
+        resposta = messagebox.askyesno(
+            "Remover linhas em branco",
+            "Tem certeza que deseja remover as linhas em branco?",
+        )
+
+        # Verifica se a resposta é positiva (1)
+        if resposta == 1:
+            # Remove as linhas com valores ausentes (NaN) do DataFrame self.df
+            self.df = self.df.dropna(axis=0)
+
+            # Atualiza a visualização da Treeview com os novos dados do DataFrame
+            self.atualiza_treeview()
+
+            # Calcula a soma das colunas que possuem valores
+            self.soma_colunas_com_valor()
+
+    def remover_linhas_selecionadas(self):
+        """
+        Abre uma nova janela para permitir que o usuário remova linhas selecionadas do DataFrame.
+
+        Esta função cria uma nova janela (usando Toplevel) que contém widgets para inserir o número da linha a ser removida.
+        Um botão "Remover" é fornecido para confirmar a ação.
+        """
+        # Cria uma nova janela para remover linhas selecionadas
+        janela_remover_linhas_selecionadas = tk.Toplevel(self.janela_principal)
+        janela_remover_linhas_selecionadas.title("Remover linhas selecionadas")
+
+        # Configuração da geometria da janela
+        largura_janela = 400
+        altura_janela = 250
+        largura_tela = janela_remover_linhas_selecionadas.winfo_screenwidth()
+        altura_tela = janela_remover_linhas_selecionadas.winfo_screenheight()
+        posicao_x = (largura_tela // 2) - (largura_janela // 2)
+        posicao_y = (altura_tela // 2) - (altura_janela // 2)
+        janela_remover_linhas_selecionadas.geometry(
+            f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}"
+        )
+
+        # Configurações visuais da janela (cor de fundo)
+        janela_remover_linhas_selecionadas.configure(bg="#FFFFFF")
+
+        # Rótulo e campo de entrada para o número da linha a ser removida
+        label_linha_inicio = tk.Label(
+            janela_remover_linhas_selecionadas,
+            text="Digite o número da linha a ser removida:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_linha_inicio.pack(pady=10)
+        entry_linha_inicio = tk.Entry(
+            janela_remover_linhas_selecionadas, font=("Arial", 12), bg="#FFFFFF"
+        )
+        entry_linha_inicio.pack()
+
+        # Rótulo e campo de entrada para o novo número da linha a ser removida
+        label_linha_fim = tk.Label(
+            janela_remover_linhas_selecionadas,
+            text="Digite o número da última linha a ser removida:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_linha_fim.pack(pady=10)
+        entry_linha_fim = tk.Entry(
+            janela_remover_linhas_selecionadas, font=("Arial", 12), bg="#FFFFFF"
+        )
+        entry_linha_fim.pack()
+
+        # Botão para executar a ação de remover as linhas
+        botao_Remover = tk.Button(
+            janela_remover_linhas_selecionadas,
+            text="Remover",
+            font=("Arial", 12),
+            command=lambda: self.funcao_remover_linhas_selecionadas(
+                entry_linha_inicio.get(),
+                entry_linha_fim.get(),
+                janela_remover_linhas_selecionadas,
+            ),
+        )
+        botao_Remover.pack(pady=20)
+
+        # Cria e exibe a janela
+        janela_remover_linhas_selecionadas.mainloop()
+
+    def funcao_remover_linhas_selecionadas(
+        self, linha_inicio, linha_fim, janela_remover_linhas_selecionadas
+    ):
+        primeira_linha = int(linha_inicio)
+        ultima_linha = int(linha_fim)
+
+        # Remove as linhas do DataFrame
+        self.df = self.df.drop(self.df.index[primeira_linha - 1 : ultima_linha])
+
+        # Atualiza a visualização do DataFrame (treeview)
+        self.atualiza_treeview()
+
+        # Realiza alguma operação relacionada às colunas com valores
+        self.soma_colunas_com_valor()
+
+        # Fecha a janela de remoção de linhas
+        janela_remover_linhas_selecionadas.destroy()
+
 
 # Instancia a classe ExcelEditor passando a janela principal como parâmetro
 editor = ExcelEditor(janela)
