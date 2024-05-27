@@ -51,8 +51,9 @@ class ExcelEditor:
         # Menu Editar
         menu_edicao = tk.Menu(menu_bar, tearoff=0)
         menu_edicao.add_command(label="Renomear Coluna", command=self.renomear_coluna)
-        menu_edicao.add_command(label="Remover Coluna", command=janela.destroy)
-        menu_edicao.add_command(label="Filtrar", command=janela.destroy)
+        menu_edicao.add_command(label="Remover Coluna", command=self.remover_coluna)
+
+        menu_edicao.add_command(label="Filtrar", command=self.filtrar)
         menu_edicao.add_command(label="Pivot", command=janela.destroy)
         menu_edicao.add_command(label="Group", command=janela.destroy)
         menu_edicao.add_command(
@@ -61,7 +62,9 @@ class ExcelEditor:
         menu_edicao.add_command(
             label="Remover Linhas Alternadas", command=self.remover_linhas_selecionadas
         )
-        menu_edicao.add_command(label="Remover Duplicados", command=janela.destroy)
+        menu_edicao.add_command(
+            label="Remover Duplicados", command=self.remover_duplicados
+        )
         menu_bar.add_cascade(label="Editar", menu=menu_edicao)
 
         # Menu Merge
@@ -104,7 +107,7 @@ class ExcelEditor:
             # Verifica se a coluna contém dados numéricos
             if pd.api.types.is_numeric_dtype(self.df[coluna]):
                 # Seleciona os valores da coluna, excluindo o primeiro elemento (o cabeçalho)
-                valores_numericos = self.df[coluna][1:]
+                valores_numericos = self.df[coluna]
 
                 # Converte os valores para tipo numérico, tratando erros com 'coerce'
                 valores_numericos = pd.to_numeric(valores_numericos, errors="coerce")
@@ -390,6 +393,237 @@ class ExcelEditor:
 
         # Fecha a janela de remoção de linhas
         janela_remover_linhas_selecionadas.destroy()
+
+    def remover_duplicados(self):
+        """
+        Abre uma nova janela para permitir que o usuário remova duplicados de uma coluna específica do DataFrame.
+        """
+
+        # Cria uma nova janela para remover duplicados
+        janela_remover_duplicados = tk.Toplevel(self.janela_principal)
+        janela_remover_duplicados.title("Remover Duplicados")
+
+        # Configuração da geometria da janela
+        largura_janela = 600
+        altura_janela = 250
+        largura_tela = janela_remover_duplicados.winfo_screenwidth()
+        altura_tela = janela_remover_duplicados.winfo_screenheight()
+        posicao_x = (largura_tela // 2) - (largura_janela // 2)
+        posicao_y = (altura_tela // 2) - (altura_janela // 2)
+        janela_remover_duplicados.geometry(
+            f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}"
+        )
+
+        # Configurações visuais da janela (cor de fundo)
+        janela_remover_duplicados.configure(bg="#FFFFFF")
+
+        # Rótulo e campo de entrada para o nome da coluna com itens duplicados
+        label_coluna = tk.Label(
+            janela_remover_duplicados,
+            text="Digite o nome da coluna com itens duplicados:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_coluna.pack(pady=10)
+        entry_coluna = tk.Entry(
+            janela_remover_duplicados, font=("Arial", 12), bg="#FFFFFF"
+        )
+        entry_coluna.pack()
+
+        # Botão para executar a ação de remover duplicados
+        botao_Remover = tk.Button(
+            janela_remover_duplicados,
+            text="Remover",
+            font=("Arial", 12),
+            command=lambda: self.funcao_remover_duplicados(
+                entry_coluna.get(),
+                janela_remover_duplicados,
+            ),
+        )
+        botao_Remover.pack(pady=20)
+
+        # Cria e exibe a janela
+        janela_remover_duplicados.mainloop()
+
+    def funcao_remover_duplicados(self, coluna, janela_remover_duplicados):
+        """
+        Remove itens duplicados na coluna especificada do DataFrame.
+
+        Args:
+            coluna (str): Nome da coluna em que duplicados serão removidos.
+            janela_remover_duplicados (Toplevel): Janela de interface para remoção de duplicados.
+        """
+        # Verifica se o usuário digitou uma coluna
+        if coluna:
+            # Remove os itens duplicados na coluna, mantendo apenas a primeira ocorrência
+            self.df = self.df.drop_duplicates(subset=coluna, keep="first")
+
+        # Atualiza a visualização do DataFrame (treeview)
+        self.atualiza_treeview()
+
+        # Calcula e exibe a soma das colunas com valores
+        self.soma_colunas_com_valor()
+
+        # Fecha a janela de remoção de duplicados
+        janela_remover_duplicados.destroy()
+
+    def remover_coluna(self):
+        """
+        Abre uma nova janela para permitir que o usuário remova duplicados de uma coluna específica do DataFrame.
+        """
+
+        # Cria uma nova janela para remover duplicados
+        janela_remover_coluna = tk.Toplevel(self.janela_principal)
+        janela_remover_coluna.title("Remover Coluna")
+
+        # Configuração da geometria da janela
+        largura_janela = 600
+        altura_janela = 250
+        largura_tela = janela_remover_coluna.winfo_screenwidth()
+        altura_tela = janela_remover_coluna.winfo_screenheight()
+        posicao_x = (largura_tela // 2) - (largura_janela // 2)
+        posicao_y = (altura_tela // 2) - (altura_janela // 2)
+        janela_remover_coluna.geometry(
+            f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}"
+        )
+
+        # Configurações visuais da janela (cor de fundo)
+        janela_remover_coluna.configure(bg="#FFFFFF")
+
+        # Rótulo e campo de entrada para o nome da coluna
+        label_coluna = tk.Label(
+            janela_remover_coluna,
+            text="Digite o nome da coluna a ser removida:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_coluna.pack(pady=10)
+        entry_coluna = tk.Entry(janela_remover_coluna, font=("Arial", 12), bg="#FFFFFF")
+        entry_coluna.pack()
+
+        # Botão para executar a ação de remover coluna
+        botao_Remover = tk.Button(
+            janela_remover_coluna,
+            text="Remover",
+            font=("Arial", 12),
+            command=lambda: self.funcao_remover_coluna(
+                entry_coluna.get(),
+                janela_remover_coluna,
+            ),
+        )
+        botao_Remover.pack(pady=20)
+
+        # Cria e exibe a janela
+        janela_remover_coluna.mainloop()
+
+    def funcao_remover_coluna(self, coluna, janela_remover_coluna):
+        """
+        Remove itens duplicados na coluna especificada do DataFrame.
+
+        Args:
+            coluna (str): Nome da coluna em que duplicados serão removidos.
+            janela_remover_coluna (Toplevel): Janela de interface para remoção de duplicados.
+        """
+        # Verifica se o usuário digitou uma coluna
+        if coluna:
+
+            # Remove a coluna selecionada
+            self.df = self.df.drop(columns=coluna)
+
+        # Atualiza a visualização do DataFrame (treeview)
+        self.atualiza_treeview()
+
+        # Calcula e exibe a soma das colunas com valores
+        self.soma_colunas_com_valor()
+
+        # Fecha a janela de remoção de duplicados
+        janela_remover_coluna.destroy()
+
+    def filtrar(self):
+        """
+        Abre uma nova janela para permitir que o usuário remova duplicados de uma coluna específica do DataFrame.
+        """
+
+        # Cria uma nova janela para remover duplicados
+        janela_filtrar = tk.Toplevel(self.janela_principal)
+        janela_filtrar.title("Filtrar")
+
+        # Configuração da geometria da janela
+        largura_janela = 600
+        altura_janela = 250
+        largura_tela = janela_filtrar.winfo_screenwidth()
+        altura_tela = janela_filtrar.winfo_screenheight()
+        posicao_x = (largura_tela // 2) - (largura_janela // 2)
+        posicao_y = (altura_tela // 2) - (altura_janela // 2)
+        janela_filtrar.geometry(
+            f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}"
+        )
+
+        # Configurações visuais da janela (cor de fundo)
+        janela_filtrar.configure(bg="#FFFFFF")
+
+        # Rótulo e campo de entrada para o nome da coluna
+        label_coluna = tk.Label(
+            janela_filtrar,
+            text="Digite o nome da coluna a ser filtrada:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_coluna.pack(pady=10)
+        entry_coluna = tk.Entry(janela_filtrar, font=("Arial", 12), bg="#FFFFFF")
+        entry_coluna.pack()
+
+        label_valor = tk.Label(
+            janela_filtrar,
+            text="Digite o valor a ser filtrado:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_valor.pack(pady=10)
+        entry_valor = tk.Entry(janela_filtrar, font=("Arial", 12), bg="#FFFFFF")
+        entry_valor.pack()
+
+        # Botão para executar a ação de remover coluna
+        botao_Remover = tk.Button(
+            janela_filtrar,
+            text="Remover",
+            font=("Arial", 12),
+            command=lambda: self.funcao_filtrar(
+                entry_coluna.get(),
+                entry_valor.get(),
+                janela_filtrar,
+            ),
+        )
+        botao_Remover.pack(pady=20)
+
+        # Cria e exibe a janela
+        janela_filtrar.mainloop()
+
+    def funcao_filtrar(self, coluna, valor, janela_filtrar):
+        """
+        Remove itens duplicados na coluna especificada do DataFrame.
+
+        Args:
+            coluna (str): Nome da coluna em que duplicados serão removidos.
+            janela_filtrar (Toplevel): Janela de interface para remoção de duplicados.
+        """
+        # Verifica se o usuário digitou uma coluna
+        if coluna:
+
+            # Verifica se o usuário digitou um valor
+            if valor:
+
+                # Filtra o dataframe com base na coluna e valor selecionados
+                self.df = self.df[self.df[coluna] == valor]
+
+        # Atualiza a visualização do DataFrame (treeview)
+        self.atualiza_treeview()
+
+        # Calcula e exibe a soma das colunas com valores
+        self.soma_colunas_com_valor()
+
+        # Fecha a janela de remoção de duplicados
+        janela_filtrar.destroy()
 
 
 # Instancia a classe ExcelEditor passando a janela principal como parâmetro
