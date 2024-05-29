@@ -1,3 +1,11 @@
+"""
+Sistema_Pandas.py
+
+Este sistema fornece uma interface gráfica para manipulação de DataFrames utilizando Pandas e Tkinter.
+Funcionalidades incluem agrupamento, filtragem, criação de tabelas dinâmicas e salvamento/carregamento de arquivos Excel.
+
+"""
+
 # Importações das bibliotecas necessárias
 import tkinter as tk
 from tkinter import *
@@ -55,7 +63,7 @@ class ExcelEditor:
 
         menu_edicao.add_command(label="Filtrar", command=self.filtrar)
         menu_edicao.add_command(label="Pivot", command=janela.destroy)
-        menu_edicao.add_command(label="Group", command=janela.destroy)
+        menu_edicao.add_command(label="Group", command=self.group)
         menu_edicao.add_command(
             label="Remover Linhas em Branco", command=self.remover_linhas_em_branco
         )
@@ -624,6 +632,113 @@ class ExcelEditor:
 
         # Fecha a janela de remoção de duplicados
         janela_filtrar.destroy()
+
+    def group(self):
+        """
+        Abre uma nova janela para permitir que o usuário remova duplicados de uma coluna específica do DataFrame.
+        """
+
+        # Cria uma nova janela para remover duplicados
+        janela_group = tk.Toplevel(self.janela_principal)
+        janela_group.title("Agrupar")
+
+        # Configuração da geometria da janela
+        largura_janela = 600
+        altura_janela = 250
+        largura_tela = janela_group.winfo_screenwidth()
+        altura_tela = janela_group.winfo_screenheight()
+        posicao_x = (largura_tela // 2) - (largura_janela // 2)
+        posicao_y = (altura_tela // 2) - (altura_janela // 2)
+        janela_group.geometry(
+            f"{largura_janela}x{altura_janela}+{posicao_x}+{posicao_y}"
+        )
+
+        # Configurações visuais da janela (cor de fundo)
+        janela_group.configure(bg="#FFFFFF")
+
+        # Rótulo e campo de entrada para o nome da coluna
+        label_coluna = tk.Label(
+            janela_group,
+            text="Digite o nome da coluna a ser agrupada:",
+            font=("Arial", 12),
+            bg="#FFFFFF",
+        )
+        label_coluna.pack(pady=10)
+        entry_coluna = tk.Entry(janela_group, font=("Arial", 12), bg="#FFFFFF")
+        entry_coluna.pack()
+
+        # Botão para executar a ação de remover coluna
+        botao_agrupar = tk.Button(
+            janela_group,
+            text="Agrupar",
+            font=("Arial", 12),
+            command=lambda: self.funcao_agrupar(
+                entry_coluna.get(),
+                janela_group,
+            ),
+        )
+        botao_agrupar.pack(pady=20)
+
+        # Cria e exibe a janela
+        janela_group.mainloop()
+
+    def funcao_agrupar(self, coluna, janela_group):
+
+        # Limpa os dados da treeview
+        self.tree.delete(*self.tree.get_children())
+
+        if coluna:
+
+            dadosAgrupados = self.df.groupby(coluna).sum()
+
+            # for
+            for i, linha in dadosAgrupados.iterrows():
+
+                values = list(linha)
+
+                for j, value in enumerate(values):
+
+                    if isinstance(value, np.generic):
+
+                        values[j] = np.asscalar(value)
+
+                # Inserindo linhas na treeview
+                self.tree.insert("", tk.END, values=[i] + values)
+
+                # Fecha a janela secundária
+                janela_group.destroy()
+
+    def merge_inner_join(self):
+
+        # Define os tipos de arquivos que serão selecionados para a função Inner Join
+        tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
+
+        # Abre a janela de seleção de arquivos e armazena o primeiro arquivo em uma variável
+        nome_do_arquivo_1 = filedialog.askopenfilename(
+            title="Selecione o primeiro arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Abre a janela de seleção de arquivos e armazena o segundo arquivo em uma variável
+        nome_do_arquivo_2 = filedialog.askopenfilename(
+            title="Selecione o segundo arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Lê os arquivos com extensões de planilhas
+        arquivo_1 = pd.read_excel(nome_do_arquivo_1)
+        arquivo_2 = pd.read_excel(nome_do_arquivo_2)
+
+        coluna_join = simpledialog.askstring(
+            "Coluna do Inner Join",
+            "Digite o nome da coluna que será utilizada para o Inner Join",
+        )
+
+        # On - qual coluna
+        # How - tipo de Join
+        # Procura e exibe os vendedores que estão em ambas as tabelas
+        self.df = pd.merge(arquivo_1, arquivo_2, on=coluna_join, how="inner")
+
+        # Atualiza a Treeview com o resultado do merge
+        self.atualiza_treeview()
 
 
 # Instancia a classe ExcelEditor passando a janela principal como parâmetro
