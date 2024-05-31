@@ -8,9 +8,8 @@ Funcionalidades incluem agrupamento, filtragem, criação de tabelas dinâmicas 
 
 # Importações das bibliotecas necessárias
 import tkinter as tk
-from tkinter import *
 from tkinter import ttk
-from tkinter import filedialog, messagebox
+from tkinter import Label, TOP, Tk, filedialog, messagebox, simpledialog
 
 import numpy as np
 import pandas as pd
@@ -77,7 +76,7 @@ class ExcelEditor:
 
         # Menu Merge
         merge_menu = tk.Menu(menu_bar, tearoff=0)
-        merge_menu.add_command(label="Inner Join", command=janela.destroy)
+        merge_menu.add_command(label="Inner Join", command=self.merge_inner_join)
         merge_menu.add_command(label="Join Full", command=janela.destroy)
         merge_menu.add_command(label="Left Join", command=janela.destroy)
         merge_menu.add_command(label="Merge Outer", command=janela.destroy)
@@ -214,6 +213,17 @@ class ExcelEditor:
 
             # Insere os valores processados na Treeview
             self.tree.insert("", tk.END, values=values)
+
+            # Configuração para centralizar os dados das colunas
+            for col in self.tree["columns"]:
+                self.tree.column(col, anchor="center")
+
+            # Adiciona a barra de rolagem horizontal
+            xscrollbar = tk.Scrollbar(
+                self.janela_principal, orient="horizontal", command=self.tree.xview
+            )
+            xscrollbar.pack(side="bottom", fill="x")
+            self.tree.configure(xscrollcommand=xscrollbar.set)
 
     def renomear_coluna(self):
         """
@@ -709,7 +719,6 @@ class ExcelEditor:
                 janela_group.destroy()
 
     def merge_inner_join(self):
-
         # Define os tipos de arquivos que serão selecionados para a função Inner Join
         tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
 
@@ -723,19 +732,85 @@ class ExcelEditor:
             title="Selecione o segundo arquivo", filetypes=tipo_de_arquivo
         )
 
-        # Lê os arquivos com extensões de planilhas
-        arquivo_1 = pd.read_excel(nome_do_arquivo_1)
-        arquivo_2 = pd.read_excel(nome_do_arquivo_2)
+        # Verifica se os arquivos foram selecionados
+        if not nome_do_arquivo_1 or not nome_do_arquivo_2:
+            messagebox.showwarning("Erro", "Seleção de arquivos cancelada.")
+            return
 
-        coluna_join = simpledialog.askstring(
-            "Coluna do Inner Join",
-            "Digite o nome da coluna que será utilizada para o Inner Join",
+        try:
+            # Lê os arquivos com extensões de planilhas
+            arquivo_1 = pd.read_excel(nome_do_arquivo_1)
+            arquivo_2 = pd.read_excel(nome_do_arquivo_2)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao ler os arquivos: {e}")
+            return
+
+        # Apresenta as colunas disponíveis para o usuário escolher
+        colunas_disponiveis = list(arquivo_2.columns)
+        colunas_selecionadas = simpledialog.askstring(
+            "Colunas do Segundo Arquivo",
+            "Selecione as colunas do segundo arquivo (separadas por vírgula)",
+            initialvalue=",".join(colunas_disponiveis),
+        )
+        if not colunas_selecionadas:
+            messagebox.showwarning(
+                "Aviso", "Nenhuma coluna do segundo arquivo foi selecionada."
+            )
+            return
+
+        # Divide a string das colunas selecionadas em uma lista
+        colunas_selecionadas = [col.strip() for col in colunas_selecionadas.split(",")]
+
+        # Verifica se as colunas selecionadas existem no segundo arquivo
+        colunas_invalidas = [
+            col for col in colunas_selecionadas if col not in colunas_disponiveis
+        ]
+        if colunas_invalidas:
+            messagebox.showwarning(
+                "Aviso",
+                f"Colunas inválidas selecionadas: {', '.join(colunas_invalidas)}",
+            )
+            return
+
+        # Solicita os sufixos para as colunas
+        sufixo_1 = simpledialog.askstring(
+            "Sufixo para o primeiro arquivo",
+            "Digite o sufixo para as colunas do primeiro arquivo",
+        )
+        sufixo_2 = simpledialog.askstring(
+            "Sufixo para o segundo arquivo",
+            "Digite o sufixo para as colunas do segundo arquivo",
         )
 
-        # On - qual coluna
-        # How - tipo de Join
-        # Procura e exibe os vendedores que estão em ambas as tabelas
-        self.df = pd.merge(arquivo_1, arquivo_2, on=coluna_join, how="inner")
+        # Verifica se os sufixos foram fornecidos
+        if not sufixo_1 or not sufixo_2:
+            messagebox.showwarning(
+                "Aviso", "Um ou ambos os sufixos não foram fornecidos."
+            )
+            return
+
+            # Solicita o nome da coluna de junção
+        coluna_join = simpledialog.askstring(
+            "Coluna de Junção",
+            "Digite o nome da coluna a ser usada para junção:",
+        )
+        if not coluna_join:
+            messagebox.showwarning("Aviso", "Nenhuma coluna de junção fornecida.")
+            return
+
+        # Continua com o processo de merge apenas com as colunas válidas selecionadas
+        try:
+            self.df = pd.merge(
+                arquivo_1,
+                arquivo_2[colunas_selecionadas],
+                on=coluna_join,
+                how="inner",
+                suffixes=(f" {sufixo_1}", f" {sufixo_2}"),
+            )
+
+            messagebox.showinfo("Sucesso", "Merge realizado com sucesso.")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao realizar o merge: {e}")
 
         # Atualiza a Treeview com o resultado do merge
         self.atualiza_treeview()
