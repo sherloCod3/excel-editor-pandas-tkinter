@@ -50,7 +50,7 @@ class ExcelEditor:
         menu_de_arquivos = tk.Menu(menu_bar, tearoff=0)
         menu_de_arquivos.add_command(label="Abrir", command=self.carregar_excel)
         menu_de_arquivos.add_separator()
-        menu_de_arquivos.add_command(label="Salvar Como", command=janela.destroy)
+        menu_de_arquivos.add_command(label="Salvar Como", command=self.salvar_como)
         menu_de_arquivos.add_separator()
         menu_de_arquivos.add_command(label="Sair", command=janela.destroy)
         menu_bar.add_cascade(label="Arquivo", menu=menu_de_arquivos)
@@ -77,9 +77,9 @@ class ExcelEditor:
         # Menu Merge
         merge_menu = tk.Menu(menu_bar, tearoff=0)
         merge_menu.add_command(label="Inner Join", command=self.merge_inner_join)
-        merge_menu.add_command(label="Join Full", command=janela.destroy)
-        merge_menu.add_command(label="Left Join", command=janela.destroy)
-        merge_menu.add_command(label="Merge Outer", command=janela.destroy)
+        merge_menu.add_command(label="Join Full", command=self.merge_join_full)
+        merge_menu.add_command(label="Left Join", command=self.merge_left_join)
+        merge_menu.add_command(label="Merge Outer", command=self.merge_outer)
         menu_bar.add_cascade(label="Merge", menu=merge_menu)
 
         # Menu Relatórios
@@ -814,6 +814,230 @@ class ExcelEditor:
 
         # Atualiza a Treeview com o resultado do merge
         self.atualiza_treeview()
+
+    def merge_join_full(self):
+        # Define os tipos de arquivos que serão selecionados para a função Inner Join
+        tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
+
+        # Abre a janela de seleção de arquivos e armazena o primeiro arquivo em uma variável
+        nome_do_arquivo_1 = filedialog.askopenfilename(
+            title="Selecione o primeiro arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Abre a janela de seleção de arquivos e armazena o segundo arquivo em uma variável
+        nome_do_arquivo_2 = filedialog.askopenfilename(
+            title="Selecione o segundo arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Verifica se os arquivos foram selecionados
+        if not nome_do_arquivo_1 or not nome_do_arquivo_2:
+            messagebox.showwarning("Erro", "Seleção de arquivos cancelada.")
+            return
+
+        try:
+            # Lê os arquivos com extensões de planilhas
+            arquivo_1 = pd.read_excel(nome_do_arquivo_1)
+            arquivo_2 = pd.read_excel(nome_do_arquivo_2)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao ler os arquivos: {e}")
+            return
+
+        # Realiza o merge do tipo "full", que une todos os registros de ambos os arquivos
+        self.df = pd.concat([arquivo_1, arquivo_2])
+
+        # Remove as linhas em duplicicidade
+        self.df = self.df.drop_duplicates()
+
+        # Substitui valores NaN por "Sem ocorrência"
+        self.df = self.df.fillna("Sem ocorrência")
+
+        messagebox.showinfo("Sucesso", "Merge realizado com sucesso.")
+
+        # Atualiza a Treeview com o resultado do merge
+        self.atualiza_treeview()
+
+        # Calcula e exibe a soma das colunas com valores
+        self.soma_colunas_com_valor()
+
+    def merge_left_join(self):
+        # Define os tipos de arquivos que serão selecionados para a função Left Join
+        tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
+
+        # Abre a janela de seleção de arquivos e armazena o primeiro arquivo em uma variável
+        nome_do_arquivo_1 = filedialog.askopenfilename(
+            title="Selecione o primeiro arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Abre a janela de seleção de arquivos e armazena o segundo arquivo em uma variável
+        nome_do_arquivo_2 = filedialog.askopenfilename(
+            title="Selecione o segundo arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Verifica se os arquivos foram selecionados
+        if not nome_do_arquivo_1 or not nome_do_arquivo_2:
+            messagebox.showwarning("Erro", "Seleção de arquivos cancelada.")
+            return
+
+        try:
+            # Lê os arquivos com extensões de planilhas
+            arquivo_1 = pd.read_excel(nome_do_arquivo_1)
+            arquivo_2 = pd.read_excel(nome_do_arquivo_2)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao ler os arquivos: {e}")
+            return
+
+        # Apresenta as colunas disponíveis para o usuário escolher
+        colunas_disponiveis = list(arquivo_1.columns)
+        coluna_selecionada = simpledialog.askstring(
+            "Coluna para Left Join",
+            "Selecione a coluna para o left join:",
+            initialvalue=",".join(colunas_disponiveis),
+        )
+        if not coluna_selecionada:
+            messagebox.showwarning("Aviso", "Nenhuma coluna foi selecionada.")
+            return
+
+        # Remove espaços em branco da coluna selecionada
+        coluna_selecionada = coluna_selecionada.strip()
+
+        # Verifica se a coluna selecionada existe em ambos os arquivos
+        if coluna_selecionada not in colunas_disponiveis:
+            messagebox.showwarning(
+                "Aviso", f"Coluna inválida selecionada: {coluna_selecionada}"
+            )
+            return
+
+        if coluna_selecionada not in arquivo_2.columns:
+            messagebox.showwarning(
+                "Aviso",
+                f"Coluna '{coluna_selecionada}' não encontrada no segundo arquivo.",
+            )
+            return
+
+        # Realiza o merge do tipo "left", que une todos os registros a partir da esquerda
+        try:
+            self.df = pd.merge(arquivo_1, arquivo_2, on=coluna_selecionada, how="left")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao realizar o merge: {e}")
+            return
+
+        # Remove duplicatas em todas as colunas
+        self.df = self.df.drop_duplicates()
+
+        # Substitui valores NaN por "Sem ocorrência"
+        self.df = self.df.fillna("Sem ocorrência")
+
+        messagebox.showinfo("Sucesso", "Merge realizado com sucesso.")
+
+        # Atualiza a Treeview com o resultado do merge
+        self.atualiza_treeview()
+
+        # Calcula e exibe a soma das colunas com valores
+        self.soma_colunas_com_valor()
+
+        # Mostra a dica ao usuário
+        messagebox.showinfo(
+            "Dica",
+            "Para remover linhas que possam estar sem informações, "
+            "utilize Editar -> Remover Linhas em Branco",
+        )
+
+    def merge_outer(self):
+        # Define os tipos de arquivos que serão selecionados para a função Outer Join
+        tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
+
+        # Abre a janela de seleção de arquivos e armazena o primeiro arquivo em uma variável
+        nome_do_arquivo_1 = filedialog.askopenfilename(
+            title="Selecione o primeiro arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Abre a janela de seleção de arquivos e armazena o segundo arquivo em uma variável
+        nome_do_arquivo_2 = filedialog.askopenfilename(
+            title="Selecione o segundo arquivo", filetypes=tipo_de_arquivo
+        )
+
+        # Verifica se os arquivos foram selecionados
+        if not nome_do_arquivo_1 or not nome_do_arquivo_2:
+            messagebox.showwarning("Erro", "Seleção de arquivos cancelada.")
+            return
+
+        try:
+            # Lê os arquivos com extensões de planilhas
+            arquivo_1 = pd.read_excel(nome_do_arquivo_1)
+            arquivo_2 = pd.read_excel(nome_do_arquivo_2)
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao ler os arquivos: {e}")
+            return
+
+        # Apresenta as colunas disponíveis para o usuário escolher
+        colunas_disponiveis = list(arquivo_1.columns)
+        coluna_selecionada = simpledialog.askstring(
+            "Coluna para o Merge Outer",
+            "Selecione a coluna para o merge outer:",
+            initialvalue=",".join(colunas_disponiveis),
+        )
+        if not coluna_selecionada:
+            messagebox.showwarning("Aviso", "Nenhuma coluna foi selecionada.")
+            return
+
+        # Remove espaços em branco da coluna selecionada
+        coluna_selecionada = coluna_selecionada.strip()
+
+        # Verifica se a coluna selecionada existe em ambos os arquivos
+        if coluna_selecionada not in colunas_disponiveis:
+            messagebox.showwarning(
+                "Aviso", f"Coluna inválida selecionada: {coluna_selecionada}"
+            )
+            return
+
+        if coluna_selecionada not in arquivo_2.columns:
+            messagebox.showwarning(
+                "Aviso",
+                f"Coluna '{coluna_selecionada}' não encontrada no segundo arquivo.",
+            )
+            return
+
+        # Realiza o merge do tipo "outer", que une todos os registros de ambos os DataFrames
+        try:
+            self.df = pd.merge(arquivo_1, arquivo_2, on=coluna_selecionada, how="outer")
+        except Exception as e:
+            messagebox.showerror("Erro", f"Erro ao realizar o merge: {e}")
+            return
+
+        # Remove duplicatas em todas as colunas
+        self.df = self.df.drop_duplicates()
+
+        # Substitui valores NaN por "Sem ocorrência"
+        self.df = self.df.fillna("Sem ocorrência")
+
+        messagebox.showinfo("Sucesso", "Merge realizado com sucesso.")
+
+        # Atualiza a Treeview com o resultado do merge
+        self.atualiza_treeview()
+
+        # Calcula e exibe a soma das colunas com valores
+        self.soma_colunas_com_valor()
+
+        # Mostra a dica ao usuário
+        messagebox.showinfo(
+            "Dica",
+            "Para remover linhas que possam estar sem informações, "
+            "utilize Editar -> Remover Linhas em Branco",
+        )
+
+    def salvar_como(self):
+        # Define os tipos de arquivos que serão selecionados para a função Outer Join
+        tipo_de_arquivo = (("Excel files", "*.xlsx;*.xls"), ("All files", "*.*"))
+
+        # Abre a janela de seleção do local para salvar, e escolher o nome do arquivo
+        nome_arquivo = filedialog.asksaveasfilename(
+            title="Salvar como", filetypes=tipo_de_arquivo, defaultextension=".xlsx"
+        )
+
+        if nome_arquivo:
+
+            # Salva o arquivo para excel
+            self.df.to_excel(nome_arquivo, index=False)
 
 
 # Instancia a classe ExcelEditor passando a janela principal como parâmetro
