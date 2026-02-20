@@ -1,99 +1,74 @@
-## Projeto em Construção 🚧
-<br>
+# Excel Editor — Pandas & Tkinter
 
-> [!CAUTION]
-> ⚠️ Este projeto está em desenvolvimento ativo.
-> Algumas funcionalidades podem estar incompletas ou sujeitas a mudanças. ⚠️
+Interface desktop para manipulação de dados Excel sem necessidade de fórmulas complexas. Construído com Python, Pandas e Tkinter.
 
-<br>
+> **Status:** Em desenvolvimento. Funcionalidades core estáveis; novas features em progresso.
 
-# 📊 Editor de Excel com Pandas
+![Screenshot](https://github.com/sherloCod3/excel-editor-pandas-tkinter/blob/main/assets/Shot-2024-04-08-094712.png)
 
-Este é um aplicativo simples de editor de Excel usando Python, Tkinter e Pandas. Ele permite abrir arquivos Excel, exibir os dados em uma interface gráfica e oferece algumas opções básicas de edição.
+---
+
+## Motivação
+
+Usuários não-técnicos precisavam fazer operações como joins, pivots e consolidações em planilhas Excel — tarefas que o Excel nativo torna complexas e propensas a erro. Este projeto expõe o poder do Pandas em uma interface visual acessível.
 
 ---
 
 ## Funcionalidades
 
-### Arquivo:
-- **Carregar Excel:** Abre uma janela para selecionar um arquivo Excel, lê o arquivo usando Pandas e atualiza a Treeview com os dados.
-- **Salvar Excel:** Salva o DataFrame atual em um novo arquivo Excel.
+### Manipulação de dados
+- Renomear, remover e filtrar colunas
+- Remover linhas em branco, duplicadas ou alternadas
+- Pivot e agrupamento por uma ou mais colunas
 
-### Editar:
-- **Renomear Coluna:** Abre uma nova janela para permitir que o usuário renomeie uma coluna do DataFrame.
-- **Remover Coluna:** Remove a coluna selecionada do DataFrame.
-- **Filtrar:** Abre uma janela para permitir que o usuário filtre os dados com base em critérios específicos.
-- **Pivot:** Abre uma janela para permitir que o usuário faça uma operação de pivotamento nos dados.
-- **Group:** Abre uma janela para permitir que o usuário agrupe os dados com base em uma ou mais colunas.
-- **Remover Linhas em Branco:** Remove as linhas em branco do DataFrame.
-- **Remover Linhas Alternadas:** Remove linhas alternadas do DataFrame.
-- **Remover Duplicados:** Remove linhas duplicadas do DataFrame.
+### Merge entre planilhas
+- Inner Join, Left Join, Full Join e Outer Merge entre dois DataFrames
+- Consolidação de múltiplas planilhas em um único conjunto de dados
+- Quebra de dados por critério (split inverso da consolidação)
 
-### Merge:
-- **Inner Join:** Realiza uma operação de inner join em dois DataFrames.
-- **Join Full:** Realiza uma operação de full join em dois DataFrames.
-- **Left Join:** Realiza uma operação de left join em dois DataFrames.
-- **Merge Outer:** Realiza uma operação de outer merge em dois DataFrames.
-
-### Relatórios:
-- **Consolidar:** Abre uma janela para permitir que o usuário consolide os dados de várias planilhas ou arquivos em um único conjunto de dados.
-- **Quebra:** Abre uma janela para permitir que o usuário divida os dados com base em critérios específicos.
-
-### Temas:
-- **Aplicar Tema Dark:** Aplica um tema escuro à interface.
-- **Aplicar Tema Light:** Aplica um tema claro à interface.
+### Interface
+- Visualização tabular via `pandastable`
+- Temas Dark e Light
+- Salvar resultado em novo arquivo `.xlsx`
 
 ---
 
-## Requisitos de Instalação
+## Stack
 
-Para executar este aplicativo, você precisa ter o Python instalado no seu sistema. Você pode baixá-lo em [python.org](https://www.python.org/downloads/).
+![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)
+![Pandas](https://img.shields.io/badge/Pandas-150458?style=flat-square&logo=pandas&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-013243?style=flat-square&logo=numpy&logoColor=white)
 
-Além disso, instale as seguintes bibliotecas Python:
+`Python` · `Pandas` · `NumPy` · `Tkinter` · `pandastable`
+
+---
+
+## Instalação
+
+**Pré-requisito:** Python 3.8+
 
 ```bash
-pip install pandas
-pip install numpy
-pip install pandastable
+git clone https://github.com/sherloCod3/excel-editor-pandas-tkinter.git
+cd excel-editor-pandas-tkinter
+
+pip install pandas numpy pandastable
 ```
 
-## Como usar 🚀
-1. **Clone o repositório:** 
-```git clone https://github.com/sherloCod3/excel-editor-pandas-tkinter.git```
+---
 
-2. **Execute o programa:**
-```python Sistema_Pandas.py```
+## Uso
 
-3. **Abra um arquivo Excel:**
-Clique em "Arquivo" no menu e selecione "Abrir".
-Escolha o arquivo Excel que deseja editar e clique em "Abrir".
+```bash
+python Sistema_Pandas.py
+```
 
-4. **Edite o Excel:**
-Utilize as opções de edição disponíveis no menu.
+1. **Arquivo → Carregar Excel** — selecione o `.xlsx` de origem
+2. Use o menu **Editar** para transformações na tabela
+3. Use o menu **Merge** para cruzar com um segundo arquivo
+4. **Arquivo → Salvar Excel** — exporta o resultado
 
 ---
 
-## Recursos 🛠️
-Abrir arquivos Excel: Importe arquivos Excel para editar.
-Editar colunas: Renomeie, remova e filtre colunas.
-Ferramentas de merge: Realize operações de merge como Inner Join, Join Full, Left Join e Merge Outer.
-Geração de relatórios: Crie relatórios consolidados e quebras de dados.
+## Licença
 
----
-
-## Screenshot
-
-Aqui está uma captura de tela do aplicativo em ação:
-
-![Screenshot do Aplicativo](https://github.com/sherloCod3/excel-editor-pandas-tkinter/blob/main/assets/Shot-2024-04-08-094712.png)
-
----
-
-## Contribuindo 🤝
-Sinta-se à vontade para contribuir com novos recursos ou correções de bugs.
-Faça um fork do projeto, implemente suas mudanças e envie uma pull request.
-
----
-
-## Licença 📝
-Este projeto está licenciado sob a Licença MIT - veja o arquivo LICENSE para detalhes.
+MIT — veja [LICENSE](./LICENSE).
