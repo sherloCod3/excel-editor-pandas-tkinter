@@ -1,0 +1,15 @@
+# ─── Pytest configuration ─────────────────────────────────────────────────────
+[tool.pyrefly]
+python_interpreter = "./venv/bin/python"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts   = "-v --tb=short"
+markers   = [
+    "unit: pure unit tests — no external dependencies",
+    "integration: requires n8n running (set N8N_WEBHOOK_URL env var)",
+]
+
+[tool.coverage.run]
+source = ["core"]
+omit   = ["venv/*", "tests/*"]

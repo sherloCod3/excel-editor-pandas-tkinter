@@ -1,0 +1,595 @@
+{
+  "name": "SecOps SOC Agent",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "soc-scan",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0001-0001-0001-000000000001",
+      "name": "Webhook - Receive Scan Request",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "webhookId": "soc-scan"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-target",
+              "name": "target",
+              "value": "={{ $json.body.target ?? $json.target ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-target-clean",
+              "name": "target_clean",
+              "value": "={{ ($json.body.target ?? $json.target ?? '').trim().toLowerCase() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0002-0002-0002-000000000002",
+      "name": "Set - Extract and Sanitise Target",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ip-regex-check",
+              "leftValue": "={{ $json.target_clean }}",
+              "rightValue": "^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0003-0003-0003-000000000003",
+      "name": "IF - IP Address or Domain?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "=http://ip-api.com/json/{{ $json.target_clean }}?fields=status,message,country,regionName,city,isp,org,query",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          },
+          "timeout": 8000
+        }
+      },
+      "id": "a1b2c3d4-0004-0004-0004-000000000004",
+      "name": "HTTP - ip-api.com Geolocation",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://www.virustotal.com/api/v3/ip_addresses/{{ $('IF - IP Address or Domain?').item.json.target_clean }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "={{ $env.VIRUSTOTAL_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          },
+          "timeout": 12000
+        }
+      },
+      "id": "a1b2c3d4-0005-0005-0005-000000000005",
+      "name": "HTTP - VirusTotal IP Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 320],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "url": "=https://www.virustotal.com/api/v3/urls/{{ Buffer.from($json.target_clean).toString('base64').replace(/=/g,'') }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-apikey",
+              "value": "={{ $env.VIRUSTOTAL_API_KEY }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": false
+            }
+          },
+          "timeout": 12000
+        }
+      },
+      "id": "a1b2c3d4-0006-0006-0006-000000000006",
+      "name": "HTTP - VirusTotal URL Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 460],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "multiplex",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0007-0007-0007-000000000007",
+      "name": "Merge - Combine Geo and VT Results",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-target-out",
+              "name": "target",
+              "value": "={{ $('IF - IP Address or Domain?').item.json.target_clean }}",
+              "type": "string"
+            },
+            {
+              "id": "field-geo",
+              "name": "location",
+              "value": "={{ $json.country ?? $json.data?.attributes?.last_analysis_stats ? 'N/A' : 'N/A' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-isp",
+              "name": "isp",
+              "value": "={{ $json.isp ?? $json.org ?? 'Unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-malicious-count",
+              "name": "_malicious_count",
+              "value": "={{ $json.data?.attributes?.last_analysis_stats?.malicious ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "field-harmless-count",
+              "name": "_harmless_count",
+              "value": "={{ $json.data?.attributes?.last_analysis_stats?.harmless ?? 0 }}",
+              "type": "number"
+            },
+            {
+              "id": "field-total-engines",
+              "name": "_total_engines",
+              "value": "={{ ($json.data?.attributes?.last_analysis_stats?.malicious ?? 0) + ($json.data?.attributes?.last_analysis_stats?.harmless ?? 0) + ($json.data?.attributes?.last_analysis_stats?.suspicious ?? 0) + ($json.data?.attributes?.last_analysis_stats?.undetected ?? 0) }}",
+              "type": "number"
+            },
+            {
+              "id": "field-threat-score",
+              "name": "threat_score",
+              "value": "={{ Math.min(100, Math.round((($json.data?.attributes?.last_analysis_stats?.malicious ?? 0) / Math.max(1, ($json.data?.attributes?.last_analysis_stats?.malicious ?? 0) + ($json.data?.attributes?.last_analysis_stats?.harmless ?? 0) + ($json.data?.attributes?.last_analysis_stats?.suspicious ?? 0) + ($json.data?.attributes?.last_analysis_stats?.undetected ?? 0))) * 100)) }}",
+              "type": "number"
+            },
+            {
+              "id": "field-known-malicious",
+              "name": "known_malicious",
+              "value": "={{ ($json.data?.attributes?.last_analysis_stats?.malicious ?? 0) > 3 }}",
+              "type": "boolean"
+            },
+            {
+              "id": "field-vt-link",
+              "name": "_vt_link",
+              "value": "={{ $json.data?.id ? 'https://www.virustotal.com/gui/ip-address/' + $json.data.id : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0008-0008-0008-000000000008",
+      "name": "Set - Build Canonical Schema",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "ai-key-check",
+              "leftValue": "={{ $env.OPENAI_API_KEY }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0009-0009-0009-000000000009",
+      "name": "IF - AI Key Present? (Feature Flag)",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are a senior SOC analyst. Based on the following threat intelligence data, write a concise 2-3 sentence threat summary for a security team. Be specific and actionable. End with a clear recommendation (block, monitor, or allow).\n\nTarget: {{ $json.target }}\nLocation: {{ $json.location }}\nISP: {{ $json.isp }}\nThreat Score: {{ $json.threat_score }}/100\nKnown Malicious: {{ $json.known_malicious }}\nMalicious Engine Detections: {{ $json._malicious_count }} of {{ $json._total_engines }} engines\n\nRespond in plain English only. No markdown, no bullet points.",
+        "options": {
+          "systemMessage": "You are a concise, expert SOC analyst. Provide short, factual, actionable threat assessments."
+        }
+      },
+      "id": "a1b2c3d4-0010-0010-0010-000000000010",
+      "name": "AI - Generate Threat Summary",
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.4,
+      "position": [1780, 160]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "options": {
+          "baseURL": "={{ $env.OPENAI_BASE_URL }}",
+          "maxTokens": 200,
+          "temperature": 0.2
+        }
+      },
+      "id": "a1b2c3d4-0011-0011-0011-000000000011",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [1780, 0],
+      "credentials": {
+        "openAiApi": {
+          "id": "openai-secops",
+          "name": "OpenAI - SecOps"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-no-ai-summary",
+              "name": "text",
+              "value": "AI summary disabled. Set OPENAI_API_KEY in your .env file to enable plain-English threat summaries.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0012-0012-0012-000000000012",
+      "name": "Set - AI Disabled Message",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1780, 420]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "id": "a1b2c3d4-0013-0013-0013-000000000013",
+      "name": "Merge - Attach AI Summary",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "field-status",
+              "name": "status",
+              "value": "success",
+              "type": "string"
+            },
+            {
+              "id": "field-final-target",
+              "name": "target",
+              "value": "={{ $('Set - Build Canonical Schema').item.json.target }}",
+              "type": "string"
+            },
+            {
+              "id": "field-final-score",
+              "name": "threat_score",
+              "value": "={{ $('Set - Build Canonical Schema').item.json.threat_score }}",
+              "type": "number"
+            },
+            {
+              "id": "field-final-location",
+              "name": "location",
+              "value": "={{ $('Set - Build Canonical Schema').item.json.location }}",
+              "type": "string"
+            },
+            {
+              "id": "field-final-malicious",
+              "name": "known_malicious",
+              "value": "={{ $('Set - Build Canonical Schema').item.json.known_malicious }}",
+              "type": "boolean"
+            },
+            {
+              "id": "field-final-summary",
+              "name": "summary",
+              "value": "={{ $json.text ?? $json.response?.text ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "field-final-details",
+              "name": "details",
+              "value": "={{ $('Set - Build Canonical Schema').item.json._malicious_count + ' of ' + $('Set - Build Canonical Schema').item.json._total_engines + ' VirusTotal engines flagged this target. ISP: ' + $('Set - Build Canonical Schema').item.json.isp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1b2c3d4-0014-0014-0014-000000000014",
+      "name": "Set - Build Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [2220, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a1b2c3d4-0015-0015-0015-000000000015",
+      "name": "Webhook Response - Return Threat Data",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2440, 300]
+    }
+  ],
+  "connections": {
+    "Webhook - Receive Scan Request": {
+      "main": [
+        [
+          {
+            "node": "Set - Extract and Sanitise Target",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Extract and Sanitise Target": {
+      "main": [
+        [
+          {
+            "node": "IF - IP Address or Domain?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - IP Address or Domain?": {
+      "main": [
+        [
+          {
+            "node": "HTTP - ip-api.com Geolocation",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP - VirusTotal IP Report",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP - VirusTotal URL Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - ip-api.com Geolocation": {
+      "main": [
+        [
+          {
+            "node": "Merge - Combine Geo and VT Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP - VirusTotal IP Report": {
+      "main": [
+        [
+          {
+            "node": "Merge - Combine Geo and VT Results",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "HTTP - VirusTotal URL Report": {
+      "main": [
+        [
+          {
+            "node": "Merge - Combine Geo and VT Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge - Combine Geo and VT Results": {
+      "main": [
+        [
+          {
+            "node": "Set - Build Canonical Schema",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Build Canonical Schema": {
+      "main": [
+        [
+          {
+            "node": "IF - AI Key Present? (Feature Flag)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - AI Key Present? (Feature Flag)": {
+      "main": [
+        [
+          {
+            "node": "AI - Generate Threat Summary",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set - AI Disabled Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI - Generate Threat Summary": {
+      "main": [
+        [
+          {
+            "node": "Merge - Attach AI Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - AI Disabled Message": {
+      "main": [
+        [
+          {
+            "node": "Merge - Attach AI Summary",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge - Attach AI Summary": {
+      "main": [
+        [
+          {
+            "node": "Set - Build Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Build Final Response": {
+      "main": [
+        [
+          {
+            "node": "Webhook Response - Return Threat Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI - Generate Threat Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false
+  },
+  "tags": [
+    {
+      "createdAt": "2026-05-15T00:00:00.000Z",
+      "updatedAt": "2026-05-15T00:00:00.000Z",
+      "id": "tag-secops",
+      "name": "SecOps"
+    }
+  ]
+}

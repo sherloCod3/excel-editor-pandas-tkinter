@@ -1,0 +1,41 @@
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: secops-n8n
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${N8N_PORT:-5678}:5678"
+    environment:
+      # ── Auth ────────────────────────────────────────────────────────────────
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_PASSWORD}
+
+      # ── Threat Intel (required) ─────────────────────────────────────────────
+      - VIRUSTOTAL_API_KEY=${VIRUSTOTAL_API_KEY}
+
+      # ── AI Summary (optional — leave blank to run without AI enrichment) ────
+      # Set to your OpenAI API key to enable AI threat summaries.
+      # Set OPENAI_BASE_URL to a local Ollama endpoint to avoid cloud costs.
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-https://api.openai.com/v1}
+
+      # ── n8n behaviour ──────────────────────────────────────────────────────
+      - N8N_LOG_LEVEL=warn
+      - EXECUTIONS_DATA_PRUNE=true
+      - EXECUTIONS_DATA_MAX_AGE=168   # keep 7 days of execution history
+      - N8N_METRICS=true
+
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+volumes:
+  n8n_data:
+    name: secops-n8n-data

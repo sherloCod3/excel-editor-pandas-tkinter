@@ -1,0 +1,9 @@
+streamlit
+pandas
+openpyxl
+requests
+types-requests
+
+# ── Testing ────────────────────────────────────────────────────────────────────
+pytest
+pytest-mock
