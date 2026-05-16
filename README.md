@@ -20,10 +20,11 @@ A **Ghost-in-the-Shell-themed security operations portal** built with Python and
 6. [Environment Variables](#environment-variables)
 7. [Running Tests](#running-tests)
 8. [n8n SOC Workflow](#n8n-soc-workflow)
-9. [Available Commands](#available-commands)
-10. [Troubleshooting](#troubleshooting)
-11. [Project History](#project-history)
-12. [License](#license)
+9. [Deployment](#deployment)
+10. [Available Commands](#available-commands)
+11. [Troubleshooting](#troubleshooting)
+12. [Project History](#project-history)
+13. [License](#license)
 
 ---
 
@@ -306,6 +307,52 @@ docker compose restart n8n
 | Set to any value | LLM Chain runs. `summary` contains a 2–3 sentence analyst assessment with a recommendation. |
 
 Full setup documentation: [`n8n/README.md`](./n8n/README.md)
+
+---
+
+## Deployment
+
+### 1. Deploying the Frontend (Streamlit App)
+
+Streamlit Community Cloud is free and pulls directly from GitHub. It is perfect for hosting this portal.
+
+1. **Push your code to GitHub**: Ensure all changes are committed and pushed to your public or private GitHub repository.
+2. **Log into Streamlit**: Go to [share.streamlit.io](https://share.streamlit.io/) and log in with your GitHub account.
+3. **Deploy the App**: 
+   - Click **"New App"**.
+   - Select your GitHub repository.
+   - Branch: `main`
+   - Main file path: `app.py`
+   - Click **Deploy!**
+
+> **Note:** Out of the box, the deployed app will work perfectly in **MOCK MODE**, making it great for portfolio demonstrations.
+
+### 2. The n8n Backend Catch (Important)
+
+Streamlit Community Cloud **only** runs Python scripts. It **cannot** run your `docker-compose.yml` file, which means it cannot host your self-hosted n8n instance. 
+
+If you want the **LIVE MODE** (real threat intelligence) to work for public users, your n8n instance must be hosted somewhere accessible over the public internet.
+
+**Options for hosting n8n:**
+- **Cloud VPS (Recommended & Cheap):** Spin up a basic Linux VPS on DigitalOcean, Hetzner, or AWS EC2, clone your repo there, and run `docker compose up -d`.
+- **Railway / Render:** You can deploy the n8n Docker image directly to PaaS providers.
+- **n8n Cloud:** Use n8n's official managed cloud.
+
+Once n8n is hosted on the public internet, copy its public Webhook URL to use in the portal.
+
+### 3. Making the Webhook URL Permanent
+
+Currently, the portal saves the webhook URL to a local `config.json` file. On Streamlit Cloud, the file system is *ephemeral*. If your app sleeps, `config.json` resets.
+
+**To make it permanent:**
+Use **Streamlit Secrets** when you are ready to permanently link your Streamlit app to your cloud-hosted n8n.
+
+1. In your Streamlit Cloud dashboard, go to the App Settings -> **Secrets**.
+2. Add your webhook URL securely:
+   ```toml
+   N8N_WEBHOOK_URL = "https://your-cloud-n8n.example.com/webhook/soc-scan"
+   ```
+3. Update `app.py`'s `load_config()` to check `st.secrets["N8N_WEBHOOK_URL"]` as a fallback.
 
 ---
 
