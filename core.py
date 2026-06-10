@@ -1,5 +1,6 @@
 import random
 import time
+import os
 from typing import Any
 from urllib.parse import urlparse
 
@@ -28,6 +29,9 @@ def _validate_webhook_url(url: str) -> bool:
     if parsed.scheme not in {"http", "https"}:
         return False
     host = parsed.hostname or ""
+    allow_local = os.getenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "").lower() in {"1", "true", "yes"}
+    if allow_local and host in {"localhost", "127.0.0.1", "::1"}:
+        return True
     return not any(host.startswith(blocked) for blocked in _SSRF_BLOCKED_HOSTS)
 
 

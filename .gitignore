@@ -13,7 +13,10 @@ build/
 
 # ─── Secrets & local config ───────────────────────────────────────────────────
 .env
-config.json        # stores webhook URL in plaintext — never commit
+# stores webhook URL in plaintext — never commit
+config.json
+# local classroom demo runbook
+DEMO_AULA.md
 
 # ─── n8n runtime data ─────────────────────────────────────────────────────────
 n8n_data/

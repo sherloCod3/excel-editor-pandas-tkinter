@@ -45,7 +45,8 @@ class TestMockMode:
 # ─── Live mode — successful response ─────────────────────────────────────────
 class TestLiveModeSuccess:
     @pytest.mark.unit
-    def test_calls_webhook_with_target(self):
+    def test_calls_webhook_with_target(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
             "status": "success",
@@ -70,7 +71,8 @@ class TestLiveModeSuccess:
         assert result["location"] == "United States"
 
     @pytest.mark.unit
-    def test_summary_field_passed_through(self):
+    def test_summary_field_passed_through(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
             "status": "success",
@@ -88,7 +90,8 @@ class TestLiveModeSuccess:
         assert result["summary"] == "AI says: all clear."
 
     @pytest.mark.unit
-    def test_string_score_from_n8n_is_coerced(self):
+    def test_string_score_from_n8n_is_coerced(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         """n8n might return threat_score as a string — must be cast to int."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {
@@ -110,20 +113,23 @@ class TestLiveModeSuccess:
 # ─── Live mode — error handling ───────────────────────────────────────────────
 class TestLiveModeErrors:
     @pytest.mark.unit
-    def test_connection_error_returns_error_key(self):
+    def test_connection_error_returns_error_key(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         with patch("core.requests.post", side_effect=requests.exceptions.ConnectionError("refused")):
             result = fetch_soc_data("8.8.8.8", webhook_url="http://localhost:5678/webhook/soc-scan")
         assert "error" in result
         assert "refused" in result["error"]
 
     @pytest.mark.unit
-    def test_timeout_returns_error_key(self):
+    def test_timeout_returns_error_key(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         with patch("core.requests.post", side_effect=requests.exceptions.Timeout("timed out")):
             result = fetch_soc_data("8.8.8.8", webhook_url="http://localhost:5678/webhook/soc-scan")
         assert "error" in result
 
     @pytest.mark.unit
-    def test_http_error_returns_error_key(self):
+    def test_http_error_returns_error_key(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         mock_resp = MagicMock()
         mock_resp.raise_for_status.side_effect = requests.exceptions.HTTPError("403 Forbidden")
         with patch("core.requests.post", return_value=mock_resp):
@@ -131,7 +137,8 @@ class TestLiveModeErrors:
         assert "error" in result
 
     @pytest.mark.unit
-    def test_uses_15s_timeout(self):
+    def test_uses_15s_timeout(self, monkeypatch):
+        monkeypatch.setenv("SECOPS_ALLOW_LOCAL_WEBHOOKS", "1")
         """Ensures we don't accidentally revert to the old 10s timeout."""
         mock_resp = MagicMock()
         mock_resp.json.return_value = {"status": "success", "target": "x", "threat_score": 0,
